@@ -5,6 +5,7 @@
  */
 
 #include <at89x51.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -112,6 +113,14 @@ static inline void __ez20_write_data_port(uint8_t data)
 	PORT_DATA = data;
 }
 
+static inline void __ez20_invalidate_signature(void)
+{
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(signature); i++)
+		signature[i] = 0xFF;
+}
+
 #define AT89C_SIGN_BASE			0x30
 #define AT89C_SIGN_OFFSET		0x1
 
@@ -135,16 +144,6 @@ static void ____ez20_read_signature(uint16_t base, uint16_t offset)
 	}
 }
 
-static void __ez20_read_signature(void)
-{
-	____ez20_read_signature(AT89C_SIGN_BASE,
-			AT89C_SIGN_OFFSET);
-
-	if (signature[AT89X_SIGN_CHIP_ID] == 0xFF)
-		____ez20_read_signature(AT89S_SIGN_BASE,
-				AT89S_SIGN_OFFSET);
-}
-
 static const struct at89x_sz_data ez20_sz_data[] = {
 	AT89X_SZ_DATA(0x51, 4096),	/* 89C51*/
 	AT89X_SZ_DATA(0x61, 4096),	/* 89LV51*/
@@ -154,6 +153,30 @@ static const struct at89x_sz_data ez20_sz_data[] = {
 	AT89X_SZ_DATA(0x65, 20480),	/* 89LV55*/
 	AT89X_SZ_DATA(0xFF, 0),
 };
+
+static bool __ez20_is_valid_chip_id(uint8_t chip_id)
+{
+	unsigned int i;
+
+	for (i = 0; ez20_sz_data[i].chip_id != 0xFF; i++)
+		if (ez20_sz_data[i].chip_id == chip_id)
+			return true;
+
+	return false;
+}
+
+static void __ez20_read_signature(void)
+{
+	____ez20_read_signature(AT89C_SIGN_BASE,
+			AT89C_SIGN_OFFSET);
+
+	if (!__ez20_is_valid_chip_id(signature[AT89X_SIGN_CHIP_ID]))
+		____ez20_read_signature(AT89S_SIGN_BASE,
+				AT89S_SIGN_OFFSET);
+
+	if (!__ez20_is_valid_chip_id(signature[AT89X_SIGN_CHIP_ID]))
+		__ez20_invalidate_signature();
+}
 
 static void __ez20_identify_chip(void)
 {
