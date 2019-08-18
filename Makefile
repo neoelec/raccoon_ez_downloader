@@ -58,7 +58,7 @@ ASRCS		:= $(EXTRA_ASRCS)
 
 
 # Define TTY Device.
-TTY_DEV		:= /dev/ttyUSB1
+TTY_DEV		:= /dev/ttyUSB0
 
 
 # Output directories
@@ -138,6 +138,13 @@ define run_packihx
 	echo ':00000001FF' >> $(2)
 endef
 
+define upload_packihx
+	for char in `cat $(1) | perl -p -e 's/(\S{1})(\S{1})/$$1 $$2 /g'`; do \
+		echo -n $$char > $(2); \
+		sleep 0.005; \
+	done
+endef
+
 # Define all object files.
 COBJS		:= $(addprefix $(OBJDIR)/, $(CSRCS:.c=.rel))
 AOBJS		:= $(addprefix $(OBJDIR)/, $(ASRCS:.S=.rel))
@@ -206,6 +213,10 @@ $(AOBJS): $(OBJDIR)/%.rel: %.S
 	@echo
 	@echo $(MSG_ASSEMBLING) $<
 	$(AS) $(ALL_ASFLAGS) -o $@ $<
+
+
+upload: $(OUTPUT)
+	@if [ ihx = $(FORMAT) ]; then $(call upload_packihx,$(<:.ihx=.hex),$(TTY_DEV)); fi
 
 
 # Target: clean project.
