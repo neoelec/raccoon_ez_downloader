@@ -172,6 +172,8 @@ static void __ez13_read_signature(void)
 static const struct at89x_sz_data ez13_sz_data[] = {
 	AT89X_SZ_DATA(0x21, 2048),	/* 89C2051 */
 	AT89X_SZ_DATA(0x41, 4096),	/* 89C4051 */
+	AT89X_SZ_DATA(0x23, 2048),	/* 89S2051 */
+	AT89X_SZ_DATA(0x43, 4096),	/* 89S4051 */
 	AT89X_SZ_DATA(0xFF, 0),
 };
 
