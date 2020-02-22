@@ -85,6 +85,16 @@ static inline void __ez20_wait_rdy(void)
 	while (!PIN_RDY);
 }
 
+#define WRITE_CODE_DATA		0, 1, 1, 1, 1
+#define READ_CODE_DATA		0, 0, 0, 1, 1
+#define WRITE_LOCK_BIT1		1, 1, 1, 1, 1
+#define WRITE_LOCK_BIT2		1, 1, 1, 0, 0
+#define WRITE_LOCK_BIT3		1, 0, 1, 1, 0
+#define READ_LOCK_BITS_1_2_3	1, 1, 0, 1, 0
+#define CHIP_ERASE		1, 0, 1, 0, 0
+#define READ_ATMEL_ID		0, 0, 0, 0, 0
+#define READ_DEVICE_ID		0, 0, 0, 0, 0
+
 static inline void __ez20_set_pgm_mode_pins(uint8_t p2_6, uint8_t p2_7,
 		uint8_t p3_3, uint8_t p3_6, uint8_t p3_7)
 {
@@ -134,7 +144,7 @@ static void ____ez20_read_signature(uint16_t base, uint16_t offset)
 
 	__ez20_set_vpp_5v();
 	__ez20_set_prog_high();
-	__ez20_set_pgm_mode_pins(0, 0, 0, 0, 0);
+	__ez20_set_pgm_mode_pins(READ_DEVICE_ID);
 
 	addr = base;
 	for (i = 0; i < ARRAY_SIZE(signature); i++, addr += offset) {
@@ -189,7 +199,7 @@ static void __ez20_identify_chip(void)
 
 	__ez20_set_vpp_5v();
 	__ez20_set_prog_high();
-	__ez20_set_pgm_mode_pins(0, 0, 0, 1, 1);
+	__ez20_set_pgm_mode_pins(READ_CODE_DATA);
 
 	nonblank = 0;
 	chksum = 0;
@@ -220,7 +230,7 @@ static int __ez20_cmd_d_dump_eeprom(void)
 
 	__ez20_set_vpp_5v();
 	__ez20_set_prog_high();
-	__ez20_set_pgm_mode_pins(0, 0, 0, 1, 1);
+	__ez20_set_pgm_mode_pins(READ_CODE_DATA);
 
 	max_addr = count ? count : bytes;
 	chkihx = 0;
@@ -258,7 +268,7 @@ static int __ez20_cmd_e_erase(void)
 	__ez20_set_vpp_12v();
 	ez_delay_ms(10);
 	__ez20_set_prog_high();
-	__ez20_set_pgm_mode_pins(1, 0, 1, 0, 0);
+	__ez20_set_pgm_mode_pins(CHIP_ERASE);
 	ez_delay_us(10);
 
 	if (signature[AT89X_SIGN_VPP] == 0x06) {
@@ -290,7 +300,7 @@ static int __ez20_cmd_f_flash_eeprom(void)
 
 	__ez20_set_vpp_5v();
 	__ez20_set_prog_high();
-	__ez20_set_pgm_mode_pins(0, 1, 1, 1, 1);
+	__ez20_set_pgm_mode_pins(WRITE_CODE_DATA);
 
 	ez_delay_us(10);
 	if (signature[AT89X_SIGN_VPP] != 0x05)
@@ -415,17 +425,17 @@ static int __ez20_cmd_l_lock(void)
 	ez_delay_ms(10);
 	__ez20_set_prog_high();
 
-	__ez20_set_pgm_mode_pins(1, 1, 1, 1, 1);
+	__ez20_set_pgm_mode_pins(WRITE_LOCK_BIT1);
 	ez_delay_ms(10);
 	__ez20_pulse_prog();
 	ez_delay_ms(5);
 
-	__ez20_set_pgm_mode_pins(1, 1, 1, 0, 0);
+	__ez20_set_pgm_mode_pins(WRITE_LOCK_BIT2);
 	ez_delay_ms(10);
 	__ez20_pulse_prog();
 	ez_delay_ms(5);
 
-	__ez20_set_pgm_mode_pins(1, 0, 1, 1, 0);
+	__ez20_set_pgm_mode_pins(WRITE_LOCK_BIT3);
 	ez_delay_ms(10);
 	__ez20_pulse_prog();
 	ez_delay_ms(5);
@@ -451,7 +461,7 @@ static int __ez20_cmd_q_read_lock_bit(void)
 	__ez20_set_vpp_12v();
 	ez_delay_ms(10);
 	__ez20_set_prog_high();
-	__ez20_set_pgm_mode_pins(1, 1, 0, 1, 0);
+	__ez20_set_pgm_mode_pins(READ_LOCK_BITS_1_2_3);
 	ez_delay_ms(10);
 
 	ez_put_bin8(__ez20_read_data_port());
@@ -469,7 +479,7 @@ static int __ez20_cmd_r_read(void)
 
 	__ez20_set_vpp_5v();
 	__ez20_set_prog_high();
-	__ez20_set_pgm_mode_pins(0, 0, 0, 1, 1);
+	__ez20_set_pgm_mode_pins(READ_CODE_DATA);
 
 	chksum = 0;
 	for(addr = 0; addr < count; addr++) {
@@ -498,7 +508,7 @@ static int __ez20_cmd_w_write(void)
 
 	__ez20_set_vpp_5v();
 	__ez20_set_prog_high();
-	__ez20_set_pgm_mode_pins(0, 1, 1, 1, 1);
+	__ez20_set_pgm_mode_pins(WRITE_CODE_DATA);
 
 	ez_delay_us(10);
 	if (signature[AT89X_SIGN_VPP] != 0x05)

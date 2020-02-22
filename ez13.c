@@ -131,6 +131,13 @@ static inline void __ez13_wait_rdy(void)
 	while (!PIN_RDY);
 }
 
+#define WRITE_CODE_DATA		0, 1, 1
+#define READ_CODE_DATA		0, 0, 1
+#define WRITE_LOCK_BIT_1	1, 1, 1
+#define WRITE_LOCK_BIT_2	1, 1, 0
+#define CHIP_ERASE		1, 0, 0
+#define READ_SIGNATURE_BYTE	0, 0, 0
+
 static inline void __ez13_set_pgm_mode_pins(uint8_t p3_3, uint8_t p3_4,
 		uint8_t p3_5)
 {
@@ -161,7 +168,7 @@ static void __ez13_read_signature(void)
 	__ez13_reset_power();
 
 	__ez13_set_prog_high();
-	__ez13_set_pgm_mode_pins(0, 0, 0);
+	__ez13_set_pgm_mode_pins(READ_SIGNATURE_BYTE);
 
 	for (i = 0; i < ARRAY_SIZE(signature); i++) {
 		signature[i] = __ez13_read_data_port();
@@ -189,7 +196,7 @@ static int __ez13_identify_chip(void)
 	__ez13_reset_power();
 
 	__ez13_set_prog_low();
-	__ez13_set_pgm_mode_pins(0, 0, 1);
+	__ez13_set_pgm_mode_pins(READ_CODE_DATA);
 
 	nonblank = 0;
 	chksum = 0;
@@ -223,7 +230,7 @@ static int __ez13_cmd_d_dump_eeprom(void)
 	__ez13_reset_power();
 
 	__ez13_set_prog_low();
-	__ez13_set_pgm_mode_pins(0, 0, 1);
+	__ez13_set_pgm_mode_pins(READ_CODE_DATA);
 
 	max_addr = count ? count : bytes;
 	chkihx = 0;
@@ -261,7 +268,7 @@ static int __ez13_cmd_e_erase(void)
 	unsigned int i;
 
 	__ez13_set_prog_high();
-	__ez13_set_pgm_mode_pins(1, 0, 0);
+	__ez13_set_pgm_mode_pins(CHIP_ERASE);
 
 	__ez13_set_vpp_12v();
 	__ez13_turn_on_vpp();
@@ -300,7 +307,7 @@ static int __ez13_cmd_f_flash_eeprom(void)
 	uint8_t chk_result;
 
 	__ez13_set_prog_high();
-	__ez13_set_pgm_mode_pins(0, 1, 1);
+	__ez13_set_pgm_mode_pins(WRITE_CODE_DATA);
 
 	__ez13_reset_power();
 	__ez13_set_vpp_12v();
@@ -422,12 +429,12 @@ static int __ez13_cmd_i_signiture(void)
 
 static int __ez13_cmd_l_lock(void)
 {
-	__ez13_set_pgm_mode_pins(1, 1, 1);
+	__ez13_set_pgm_mode_pins(WRITE_LOCK_BIT_1);
 	__ez13_set_vpp_12v();
 	ez_delay_ms(20);
 	__ez13_pulse_prog();
 
-	__ez13_set_pgm_mode_pins(1, 1, 0);
+	__ez13_set_pgm_mode_pins(WRITE_LOCK_BIT_2);
 	__ez13_set_vpp_12v();
 	ez_delay_ms(20);
 	__ez13_pulse_prog();
@@ -459,7 +466,7 @@ static int __ez13_cmd_r_read(void)
 	__ez13_reset_power();
 
 	__ez13_set_prog_low();
-	__ez13_set_pgm_mode_pins(0, 0, 1);
+	__ez13_set_pgm_mode_pins(READ_CODE_DATA);
 
 	chksum = 0;
 	for(i = 0; i < count; i++) {
@@ -487,7 +494,7 @@ static int __ez13_cmd_w_write(void)
 	uint8_t tmp;
 
 	__ez13_set_prog_high();
-	__ez13_set_pgm_mode_pins(0, 1, 1);
+	__ez13_set_pgm_mode_pins(WRITE_CODE_DATA);
 
 	__ez13_reset_power();
 	__ez13_set_vpp_12v();
